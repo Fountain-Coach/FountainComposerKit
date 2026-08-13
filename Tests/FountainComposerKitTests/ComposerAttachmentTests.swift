@@ -31,6 +31,7 @@ final class ComposerAttachmentTests: XCTestCase {
         }
         let revoked = try await client.revoke(first.reference)
         XCTAssertEqual(revoked.state, .revoked)
-        XCTAssertNil(await client.bytes(for: first.reference.id))
+        let remaining = await client.bytes(for: first.reference.id)
+        XCTAssertNil(remaining)
     }
 }

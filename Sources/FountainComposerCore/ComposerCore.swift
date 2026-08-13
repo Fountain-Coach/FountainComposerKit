@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 public struct ComposerTurn: Codable, Sendable, Equatable, Identifiable {
     public let id: UUID
@@ -115,7 +116,6 @@ public protocol ComposerAttachmentClient: Sendable {
 
 public enum ComposerAttachmentDigest {
     public static func sha256(_ bytes: Data) -> String {
-        // The app supplies a cryptographic digest adapter; the core keeps no hashing dependency.
-        bytes.map { String(format: "%02x", $0) }.joined()
+        SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
     }
 }
