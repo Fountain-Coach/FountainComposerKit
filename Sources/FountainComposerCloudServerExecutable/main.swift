@@ -13,8 +13,10 @@ struct FountainComposerCloudServerExecutable {
         let environment = ProcessInfo.processInfo.environment
         let port = Int(environment["FOUNTAIN_COMPOSER_PORT"] ?? "8789") ?? 8789
         let rootPath = environment["FOUNTAIN_COMPOSER_ROOT"] ?? "/var/lib/fountain-composer/attachments"
-        guard let token = environment["FOUNTAIN_COMPOSER_TOKEN"], !token.isEmpty else {
-            FileHandle.standardError.write(Data("FOUNTAIN_COMPOSER_TOKEN is required\n".utf8))
+        // The existing managed image cloud may deliberately share its bearer boundary with composer custody.
+        // A dedicated composer token takes precedence when a deployment provides one.
+        guard let token = environment["FOUNTAIN_COMPOSER_TOKEN"] ?? environment["FOUNTAIN_IMAGE_CLOUD_TOKEN"], !token.isEmpty else {
+            FileHandle.standardError.write(Data("FOUNTAIN_COMPOSER_TOKEN or FOUNTAIN_IMAGE_CLOUD_TOKEN is required\n".utf8))
             exit(78)
         }
         let store = try FileSystemAttachmentCloud(root: URL(fileURLWithPath: rootPath, isDirectory: true))
