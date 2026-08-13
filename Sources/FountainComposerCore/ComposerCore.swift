@@ -1,5 +1,5 @@
 import Foundation
-import CryptoKit
+import Crypto
 
 public struct ComposerTurn: Codable, Sendable, Equatable, Identifiable {
     public let id: UUID
