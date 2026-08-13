@@ -7,11 +7,13 @@ let package = Package(
     products: [
         .library(name: "FountainComposerCore", targets: ["FountainComposerCore"]),
         .library(name: "FountainComposerCloud", targets: ["FountainComposerCloud"]),
+        .executable(name: "fountain-composer-cloud-server", targets: ["FountainComposerCloudServerExecutable"]),
         .library(name: "FountainComposerTestKit", targets: ["FountainComposerTestKit"])
     ],
     targets: [
         .target(name: "FountainComposerCore"),
         .target(name: "FountainComposerCloud", dependencies: ["FountainComposerCore"]),
+        .executableTarget(name: "FountainComposerCloudServerExecutable", dependencies: ["FountainComposerCloud"]),
         .target(name: "FountainComposerTestKit", dependencies: ["FountainComposerCore"]),
         .testTarget(name: "FountainComposerKitTests", dependencies: ["FountainComposerCore", "FountainComposerCloud", "FountainComposerTestKit"])
     ]
