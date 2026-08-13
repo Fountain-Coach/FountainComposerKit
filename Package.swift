@@ -6,11 +6,13 @@ let package = Package(
     platforms: [.macOS(.v14), .iOS(.v17)],
     products: [
         .library(name: "FountainComposerCore", targets: ["FountainComposerCore"]),
+        .library(name: "FountainComposerCloud", targets: ["FountainComposerCloud"]),
         .library(name: "FountainComposerTestKit", targets: ["FountainComposerTestKit"])
     ],
     targets: [
         .target(name: "FountainComposerCore"),
+        .target(name: "FountainComposerCloud", dependencies: ["FountainComposerCore"]),
         .target(name: "FountainComposerTestKit", dependencies: ["FountainComposerCore"]),
-        .testTarget(name: "FountainComposerKitTests", dependencies: ["FountainComposerCore", "FountainComposerTestKit"])
+        .testTarget(name: "FountainComposerKitTests", dependencies: ["FountainComposerCore", "FountainComposerCloud", "FountainComposerTestKit"])
     ]
 )
