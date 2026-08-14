@@ -102,6 +102,9 @@ public struct RetentionReceipt: Codable, Sendable, Equatable {
 
 public enum ComposerAttachmentError: Error, Codable, Sendable, Equatable {
     case emptyPayload
+    case attachmentTooLarge(filename: String, actualBytes: Int64, limitBytes: Int64)
+    case tooManyAttachments(actual: Int, limit: Int)
+    case turnTooLarge(actualBytes: Int64, limitBytes: Int64)
     case invalidFilename
     case unsupportedMediaType(String)
     case idempotencyConflict

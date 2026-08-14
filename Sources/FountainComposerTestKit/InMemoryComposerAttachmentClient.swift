@@ -8,7 +8,7 @@ public actor InMemoryComposerAttachmentClient: ComposerAttachmentClient {
     public init() {}
 
     public func admit(_ input: AttachmentInput, idempotencyKey: String) async throws -> AttachmentReceipt {
-        guard !input.bytes.isEmpty else { throw ComposerAttachmentError.emptyPayload }
+        try AttachmentUploadLimits.validate(input)
         guard !input.filename.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw ComposerAttachmentError.invalidFilename
         }

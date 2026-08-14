@@ -45,7 +45,7 @@ public actor FileSystemAttachmentCloud: AttachmentCloudStore {
     }
 
     public func admit(_ input: AttachmentInput, idempotencyKey: String) async throws -> AttachmentReceipt {
-        guard !input.bytes.isEmpty else { throw ComposerAttachmentError.emptyPayload }
+        try AttachmentUploadLimits.validate(input)
         let filename = input.filename.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !filename.isEmpty, !filename.contains("/") else { throw ComposerAttachmentError.invalidFilename }
         guard input.mediaType.contains("/") else { throw ComposerAttachmentError.unsupportedMediaType(input.mediaType) }
@@ -126,6 +126,9 @@ public actor ComposerCloudHTTPHandler {
             switch (request.method, request.path) {
             case ("POST", "/v1/attachments/admit"):
                 guard let body = request.body else { return Self.error(400, "missing body") }
+                guard body.count <= AttachmentUploadLimits.maxEncodedRequestBytes else {
+                    return Self.error(413, "attachment request is too large")
+                }
                 let admission = try decoder.decode(AttachmentAdmissionRequest.self, from: body)
                 let receipt = try await store.admit(admission.input(), idempotencyKey: admission.idempotencyKey)
                 return ComposerCloudHTTPResponse(statusCode: 200, body: try encoder.encode(receipt))
@@ -133,7 +136,12 @@ public actor ComposerCloudHTTPHandler {
                 return Self.error(404, "not found")
             }
         } catch let error as ComposerAttachmentError {
-            return Self.error(error == .notFound ? 404 : 409, String(describing: error))
+            let status = switch error {
+            case .attachmentTooLarge, .tooManyAttachments, .turnTooLarge: 413
+            case .notFound: 404
+            default: 409
+            }
+            return Self.error(status, String(describing: error))
         } catch {
             return Self.error(400, "invalid request")
         }

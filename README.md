@@ -10,3 +10,10 @@ remains the byte authority.
 The hosted seam is `POST /v1/attachments/admit`. The request carries a typed `AttachmentAdmissionRequest`; the
 response is an `AttachmentReceipt`. The server persists bytes and the idempotency receipt remotely before Reframe
 keeps the attachment reference in its composer state.
+
+## Composer intake ceiling
+
+The shared contract is intentionally generous but finite: one turn may contain up to **8 attachments**, each up to
+**50 MiB**, with **200 MiB total**. Reframe validates a complete selection or paste batch before the first network
+call, so an over-limit batch cannot partially enter the turn. The Attachment Cloud independently enforces the
+per-object limit and rejects oversized transport requests. These are admission limits, not model-context limits.

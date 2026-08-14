@@ -58,4 +58,52 @@ final class ComposerAttachmentTests: XCTestCase {
         XCTAssertEqual(response.statusCode, 200)
         XCTAssertNoThrow(try JSONDecoder().decode(AttachmentReceipt.self, from: response.body))
     }
+
+    func testUploadLimitsAcceptGenerousBoundaryAndRejectOverflow() throws {
+        let boundary = AttachmentInput(
+            kind: .file,
+            filename: "boundary.bin",
+            mediaType: "application/octet-stream",
+            bytes: Data(repeating: 0, count: Int(AttachmentUploadLimits.maxBytesPerAttachment))
+        )
+        XCTAssertNoThrow(try AttachmentUploadLimits.validate(boundary))
+        XCTAssertThrowsError(try AttachmentUploadLimits.validate(AttachmentInput(
+            kind: .file,
+            filename: "too-large.bin",
+            mediaType: "application/octet-stream",
+            bytes: Data(repeating: 0, count: Int(AttachmentUploadLimits.maxBytesPerAttachment + 1))
+        ))) { error in
+            XCTAssertEqual(error as? ComposerAttachmentError, .attachmentTooLarge(
+                filename: "too-large.bin",
+                actualBytes: AttachmentUploadLimits.maxBytesPerAttachment + 1,
+                limitBytes: AttachmentUploadLimits.maxBytesPerAttachment
+            ))
+        }
+    }
+
+    func testUploadLimitsRejectBatchCountAndTotalBeforeAdmission() throws {
+        let small = AttachmentInput(kind: .file, filename: "small.bin", mediaType: "application/octet-stream", bytes: Data([1]))
+        XCTAssertThrowsError(try AttachmentUploadLimits.validateBatch(
+            Array(repeating: small, count: AttachmentUploadLimits.maxAttachmentsPerTurn + 1)
+        )) { error in
+            XCTAssertEqual(error as? ComposerAttachmentError, .tooManyAttachments(
+                actual: AttachmentUploadLimits.maxAttachmentsPerTurn + 1,
+                limit: AttachmentUploadLimits.maxAttachmentsPerTurn
+            ))
+        }
+
+        let unit = Data(repeating: 0, count: Int(AttachmentUploadLimits.maxBytesPerTurn / 5))
+        let first = AttachmentInput(kind: .file, filename: "first.bin", mediaType: "application/octet-stream", bytes: unit)
+        let second = AttachmentInput(kind: .file, filename: "second.bin", mediaType: "application/octet-stream", bytes: unit)
+        let third = AttachmentInput(kind: .file, filename: "third.bin", mediaType: "application/octet-stream", bytes: unit)
+        let fourth = AttachmentInput(kind: .file, filename: "fourth.bin", mediaType: "application/octet-stream", bytes: unit)
+        let fifth = AttachmentInput(kind: .file, filename: "fifth.bin", mediaType: "application/octet-stream", bytes: unit)
+        let overflow = AttachmentInput(kind: .file, filename: "overflow.bin", mediaType: "application/octet-stream", bytes: Data([1]))
+        XCTAssertThrowsError(try AttachmentUploadLimits.validateBatch([first, second, third, fourth, fifth, overflow])) { error in
+            XCTAssertEqual(error as? ComposerAttachmentError, .turnTooLarge(
+                actualBytes: AttachmentUploadLimits.maxBytesPerTurn + 1,
+                limitBytes: AttachmentUploadLimits.maxBytesPerTurn
+            ))
+        }
+    }
 }
