@@ -40,4 +40,22 @@ public struct AttachmentUploadLimits: Sendable, Equatable {
             )
         }
     }
+
+    public static func validateTurn(existingAttachmentCount: Int, existingByteTotal: Int64, adding inputs: [AttachmentInput]) throws {
+        try validateBatch(inputs)
+        let totalCount = existingAttachmentCount + inputs.count
+        guard totalCount <= maxAttachmentsPerTurn else {
+            throw ComposerAttachmentError.tooManyAttachments(
+                actual: totalCount,
+                limit: maxAttachmentsPerTurn
+            )
+        }
+        let totalBytes = existingByteTotal + inputs.reduce(Int64(0)) { $0 + Int64($1.bytes.count) }
+        guard totalBytes <= maxBytesPerTurn else {
+            throw ComposerAttachmentError.turnTooLarge(
+                actualBytes: totalBytes,
+                limitBytes: maxBytesPerTurn
+            )
+        }
+    }
 }

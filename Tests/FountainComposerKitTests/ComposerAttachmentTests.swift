@@ -105,5 +105,16 @@ final class ComposerAttachmentTests: XCTestCase {
                 limitBytes: AttachmentUploadLimits.maxBytesPerTurn
             ))
         }
+
+        XCTAssertThrowsError(try AttachmentUploadLimits.validateTurn(
+            existingAttachmentCount: AttachmentUploadLimits.maxAttachmentsPerTurn,
+            existingByteTotal: 0,
+            adding: [small]
+        )) { error in
+            XCTAssertEqual(error as? ComposerAttachmentError, .tooManyAttachments(
+                actual: AttachmentUploadLimits.maxAttachmentsPerTurn + 1,
+                limit: AttachmentUploadLimits.maxAttachmentsPerTurn
+            ))
+        }
     }
 }
