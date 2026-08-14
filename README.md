@@ -7,6 +7,14 @@ HTTPS client/handler, and a filesystem-backed Attachment Cloud store. It deliber
 model providers, FountainStore, PhotoKit, or iCloud. Reframe remains the product adapter; the remote Attachment Cloud
 remains the byte authority.
 
+## Pasteboard ingress
+
+`ComposerPasteboardPolicy` is the shared ingress rule for composer hosts. Attachment representations are preferred in
+this order: image data, file URL, PDF, and generic data; plain text remains writer text. A small compatibility adapter
+recognizes an existing supported image/document path only when a macOS pasteboard producer exposes the shared-pasteboard
+item that way. The path is read transiently and is never returned as a durable composer reference. Hosts must persist
+only the remote attachment receipt and reference after admission.
+
 The hosted seam is `POST /v1/attachments/admit`. The request carries a typed `AttachmentAdmissionRequest`; the
 response is an `AttachmentReceipt`. The server persists bytes and the idempotency receipt remotely before Reframe
 keeps the attachment reference in its composer state.
